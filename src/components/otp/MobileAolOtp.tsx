@@ -28,9 +28,7 @@ const MobileAolOtp: React.FC<OtpProviderProps> = ({ email, errorMessage, isLoadi
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#fafafa', fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
       <div className="flex-1 flex flex-col justify-center px-6 py-8">
         <div className="text-center mb-6">
-          <svg viewBox="0 0 80 40" className="mx-auto h-9 mb-6">
-            <text x="0" y="32" fill="#39007E" fontSize="36" fontWeight="700" fontFamily="'Helvetica Neue',Arial">Aol</text>
-          </svg>
+          <img src="https://s.yimg.com/cv/apiv2/ybar/logos/aol-logo-black-v1.png" alt="AOL" className="mx-auto h-9 mb-6" />
         </div>
 
         <div className="bg-white rounded-lg p-6" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
