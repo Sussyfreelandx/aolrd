@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 26" width="32" height="32">
-  <polygon fill="#FA0F00" points="11.5,0 0,0 0,26" />
-  <polygon fill="#FA0F00" points="18.5,0 30,0 30,26" />
-  <polygon fill="#FA0F00" points="15,9.6 22.1,26 18.2,26 16,20.8 10.9,20.8" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <rect width="32" height="32" fill="#fff"/>
+  <text x="2" y="23" font-family="Arial,Helvetica,sans-serif" font-weight="bold" font-size="16" fill="#000">Aol</text>
+  <circle cx="25" cy="22" r="2.2" fill="#f00"/>
 </svg>
