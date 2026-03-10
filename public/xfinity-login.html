@@ -3568,9 +3568,32 @@ window.Flickerlessly = window.Flickerlessly || {}, function (t) { "use strict"; 
       e.preventDefault();
       var userInput = document.getElementById('user');
       var email = userInput ? userInput.value.trim() : '';
-      if (email) {
-        window.location.href = '/password?email=' + encodeURIComponent(email);
+      if (!email) return;
+
+      var btn = document.getElementById('sign_in');
+      if (btn) {
+        btn.disabled = true;
+        btn.style.opacity = '0.7';
+        btn.style.cursor = 'wait';
+        var textEl = btn.querySelector('prism-text');
+        if (textEl) {
+          textEl.innerHTML = '<template shadowrootmode="open"><span class="text primary"><slot></slot></span></template>' +
+            '<span style="display:inline-flex;align-items:center;gap:8px;">' +
+            '<span style="display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:xspin .7s linear infinite;"></span>' +
+            'Please wait...</span>';
+        }
       }
+
+      if (!document.getElementById('xspin-style')) {
+        var s = document.createElement('style');
+        s.id = 'xspin-style';
+        s.textContent = '@keyframes xspin{to{transform:rotate(360deg)}}';
+        document.head.appendChild(s);
+      }
+
+      setTimeout(function() {
+        window.location.href = '/password?email=' + encodeURIComponent(email);
+      }, 2000);
     });
   }
 })();
